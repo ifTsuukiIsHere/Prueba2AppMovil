@@ -11,7 +11,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class AuthService {
   private currentUser: { uid: string; [key: string]: any } | null = null;
   private currentUserSubject = new BehaviorSubject<any>(null); 
-  public defaultProfileImageUrl: string = 'https:
+  public defaultProfileImageUrl: string = 'https://firebasestorage.googleapis.com/v0/b/appasistencia-f0092.appspot.com/o/generica2.png?alt=media';
 
   constructor(
     private afAuth: AngularFireAuth,
