@@ -48,9 +48,25 @@ export class PerfilUsuarioPage {
       .addElement(this.container.nativeElement)
       .duration(500)
       .easing('ease-in-out')
-      .keyframes([{ offset: 0, opacity: '1', transform: 'translateX(0)' }, { offset: 1, opacity: '0', transform: 'translateX(-100%)' }]);
-    animation.play().then(() => callback()).catch(error => { console.error('Error en la animación:', error); callback(); });
+      .keyframes([
+        { offset: 0, opacity: '1', transform: 'translateX(0)' },
+        { offset: 0.99, opacity: '0', transform: 'translateX(-100%)' },
+        { offset: 1, opacity: '1', transform: 'translateX(0)' } // Reset al final de la animación
+      ]);
+  
+    animation.play().then(() => {
+      // Restaurar el estilo al estado inicial después de la animación
+      this.container.nativeElement.style.opacity = '1';
+      this.container.nativeElement.style.transform = 'translateX(0)';
+      callback();
+    }).catch(error => {
+      console.error('Error en la animación:', error);
+      callback();
+    });
   }
+  
+  
+  
 
   volver() {
     this.navCtrl.back();
