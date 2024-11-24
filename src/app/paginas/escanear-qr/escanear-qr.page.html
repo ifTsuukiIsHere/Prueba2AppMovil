@@ -8,15 +8,6 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-button expand="block" (click)="startScan()">Iniciar Escaneo</ion-button>
-
-  <ion-card *ngIf="qrUsuario">
-    <ion-card-header>
-      <ion-card-title>Código QR Escaneado</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <!-- Mostrar el valor del código QR escaneado -->
-      <p>{{ qrUsuario }}</p>
-    </ion-card-content>
-  </ion-card>
+  <p>Para registrar tu asistencia escanea el codigo QR asignado por tu profesor</p>
+  <ion-button expand="block" (click)="escanear()">Iniciar Escaneo</ion-button>
 </ion-content>

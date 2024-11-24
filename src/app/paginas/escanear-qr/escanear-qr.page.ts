@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { BarcodeScanner } from 'capacitor-barcode-scanner';
 import { AuthService } from 'src/app/servicio/autentificacion.service';
-import QrScanner from 'qr-scanner';
 
 @Component({
   selector: 'app-escanear-qr',
@@ -8,49 +8,61 @@ import QrScanner from 'qr-scanner';
   styleUrls: ['./escanear-qr.page.scss'],
 })
 export class EscanearQrPage implements OnInit {
-  qrUsuario: string | null = null;
+  textoescaneado: string = '';
 
   constructor(private authService: AuthService) {}
 
   ngOnInit() {}
 
-  //Con esta se debería escanear el qr, me avisai si te funcionó
-  async startScan() {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.onchange = async (event: any) => {
-      const file = event.target.files[0];
-      if (file) {
+  async escanear() {
+    try {
+      // Escanear el código QR
+      const scanResultado = await BarcodeScanner.scan();
+      console.log('Resultado del escaneo:', scanResultado);
+
+      // Verificar si el QR tiene un código válido
+      if (scanResultado.result && scanResultado.code) {
+        console.log('Contenido del QR escaneado:', scanResultado.code);
+
         try {
-          
-          const resultado = await QrScanner.scanImage(file);
-          if (resultado) {
-            this.qrUsuario = resultado; 
+          // Intentar procesar el contenido como JSON
+          const datosQR = JSON.parse(scanResultado.code);
+          console.log('Datos procesados del QR:', datosQR);
 
-            
-            try {
-              const qrData = JSON.parse(resultado);
-              const { seccion, code, fecha, asistencia } = qrData;
+          // Validar las claves del QR
+          if (
+            typeof datosQR.seccion === 'string' &&
+            typeof datosQR.code === 'string' &&
+            typeof datosQR.fecha === 'string' &&
+            typeof datosQR.asistencia === 'boolean'
+          ) {
+            console.log('Formato correcto del QR:', datosQR);
 
-              if (seccion && code && fecha && typeof asistencia === "boolean") {
-                await this.authService.registrarDatosQR(seccion, code, fecha, asistencia);
-                console.log('Datos del QR registrados con éxito');
-                alert('Datos registrados exitosamente');
-              } else {
-                console.error('El contenido del QR no contiene los datos esperados');
-                alert('El QR no contiene los datos necesarios.');
-              }
-            } catch (e) {
-              console.warn('El QR no contiene datos JSON válidos, pero se ha leído con éxito.');
-            }
+            // Almacenar el texto escaneado
+            this.textoescaneado = JSON.stringify(datosQR);
+
+            // Registrar los datos del QR en Firestore
+            await this.authService.registrarDatosQR(
+              datosQR.seccion,
+              datosQR.code,
+              datosQR.fecha,
+              datosQR.asistencia
+            );
+
+            alert('QR escaneado y datos registrados exitosamente.');
+          } else {
+            alert('El QR no contiene los datos necesarios.');
           }
         } catch (error) {
-          console.error('Error al procesar la imagen o el contenido no es válido:', error);
-          alert('Error al procesar el QR. Verifica el contenido.');
+          console.error('Error al procesar el QR:', error);
+          alert('El QR no contiene datos válidos.');
         }
+      } else {
+        alert('No se detectó ningún código QR.');
       }
-    };
-    fileInput.click(); 
+    } catch (error) {
+      console.error('Error durante el escaneo:', error);
+      alert('Error al escanear el QR. Inténtalo nuevamente.');
+    }
   }
 }
