@@ -25,21 +25,22 @@ export class PerfilUsuarioPage {
   }
 
   cargarUsuario() {
-    
-    this.usuario = this.authService.obtenerUsuarioAutenticado();
-    if (this.usuario) {
-      
-      this.imagenPerfil = this.usuario.img || this.authService.defaultProfileImageUrl;
-      console.log('URL de imagen de perfil:', this.imagenPerfil); 
-    } else {
-      console.warn('No se encontró el usuario autenticado.');
-      this.imagenPerfil = 'assets/imagenes/default-profile.png';
-    }
+    this.authService.usuarioActual.subscribe((user) => {
+      if (user) {
+        this.usuario = user;
+        this.imagenPerfil = user.img || this.authService.defaultProfileImageUrl;
+        console.log('Datos de usuario actualizados:', this.usuario);
+      } else {
+        console.warn('No se encontró el usuario autenticado.');
+        this.imagenPerfil = 'assets/imagenes/default-profile.png';
+      }
+    });
   }
 
   
   verAsistencia() { this.playTransitionAnimation(() => this.navCtrl.navigateForward('/ver-asistencia', { animated: false })); }
   Registrar() { this.playTransitionAnimation(() => this.navCtrl.navigateForward('/escanear-qr', { animated: false })); }
+  editar_perfil() { this.playTransitionAnimation(() => this.navCtrl.navigateForward('/editar-perfil', { animated: false })); }
   cerrarSesion() { this.playTransitionAnimation(() => { this.authService.cerrarSesion(); this.navCtrl.navigateRoot('/login', { animated: false }); }); }
 
   playTransitionAnimation(callback: () => void) {
@@ -51,7 +52,7 @@ export class PerfilUsuarioPage {
       .keyframes([
         { offset: 0, opacity: '1', transform: 'translateX(0)' },
         { offset: 0.99, opacity: '0', transform: 'translateX(-100%)' },
-        { offset: 1, opacity: '1', transform: 'translateX(0)' } // Reset al final de la animación
+        { offset: 1, opacity: '1', transform: 'translateX(0)' } 
       ]);
   
     animation.play().then(() => {

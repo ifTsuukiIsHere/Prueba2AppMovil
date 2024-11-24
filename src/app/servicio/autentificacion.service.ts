@@ -4,6 +4,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
 import { arrayUnion } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,8 @@ export class AuthService {
   constructor(
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
-    private router: Router
+    private router: Router,
+    private storage: AngularFireStorage
   ) {
     const userData = localStorage.getItem('user');
     this.currentUser = userData ? JSON.parse(userData) : null;
@@ -84,6 +86,7 @@ export class AuthService {
   
         
         const newUser = {
+          
           email,
           img: extraData.img || this.defaultProfileImageUrl, 
           qrCode: email,
@@ -177,8 +180,66 @@ export class AuthService {
       throw new Error('No se pudo enviar el correo de recuperación. Verifica que el correo esté registrado.');
     }
   }
-
   
+  
+  async obtenerImagenPerfil(): Promise<string> {
+    if (!this.currentUser) {
+      throw new Error('No hay usuario autenticado.');
+    }
+  
+    try {
+      const uid = this.currentUser.uid;
+  
+      // Obtiene el documento del usuario desde Firestore
+      const userDoc = await this.firestore.collection('users').doc(uid).get().toPromise();
+      const userData = userDoc?.data() as { img?: string } | undefined;
+  
+      return userData?.img || this.defaultProfileImageUrl; // Retorna la URL de la imagen o una por defecto
+    } catch (error) {
+      console.error('Error al obtener la imagen de perfil:', error);
+      throw new Error('No se pudo obtener la imagen de perfil.');
+    }
+  }
+  
+
+  async subirImagen(file: File): Promise<string> {
+    try {
+      const filePath = `profile-images/${file.name}`;
+      const fileRef = this.storage.ref(filePath);
+  
+      // Subir archivo a Firebase Storage
+      const task = await this.storage.upload(filePath, file);
+  
+      // Obtener la URL de descarga
+      const downloadURL = await fileRef.getDownloadURL().toPromise();
+      return downloadURL;
+    } catch (error) {
+      console.error('Error al subir la imagen:', error);
+      throw error;
+    }
+  }  
+
+  async actualizarImagenPerfil(imagenUrl: string): Promise<void> {
+    if (!this.currentUser) {
+      throw new Error('No hay usuario autenticado.');
+    }
+  
+    try {
+      const uid = this.currentUser.uid;
+  
+      // Actualizar la imagen en Firestore
+      await this.firestore.collection('users').doc(uid).update({
+        img: imagenUrl,
+      });
+  
+      console.log('Imagen de perfil actualizada con éxito.');
+    } catch (error) {
+      console.error('Error al actualizar la imagen de perfil:', error);
+      throw error;
+    }
+  }
+  
+
   async cerrarSesion(): Promise<void> {
     await this.afAuth.signOut();
     this.currentUser = null;
