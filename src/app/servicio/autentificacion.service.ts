@@ -14,6 +14,10 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null); 
   public defaultProfileImageUrl: string = 'https://firebasestorage.googleapis.com/v0/b/appasistencia-f0092.appspot.com/o/generica2.png?alt=media';
 
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
   constructor(
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
@@ -73,6 +77,28 @@ export class AuthService {
     } catch (error: any) {
       console.error('Error al iniciar sesión:', error);
       throw new Error(this.getFirebaseErrorMessage(error));
+    }
+  }
+
+  async guardarCredencialesBiometricas(uid: string, email: string, password: string): Promise<void> {
+    try {
+      await this.firestore.collection('biometricCreds').doc(uid).set({ email, password });
+    } catch (error) {
+      console.error('Error al guardar credenciales biométricas:', error);
+      throw new Error('No se pudieron guardar las credenciales biométricas.');
+    }
+  }
+
+  async obtenerCredencialesBiometricas(uid: string): Promise<{ email: string; password: string } | null> {
+    try {
+      const credsDoc = await this.firestore.collection('biometricCreds').doc(uid).get().toPromise();
+      if (credsDoc && credsDoc.exists) {
+        return credsDoc.data() as { email: string; password: string };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error al obtener credenciales biométricas:', error);
+      throw new Error('No se pudieron recuperar las credenciales biométricas.');
     }
   }
 
